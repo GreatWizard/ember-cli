@@ -65,8 +65,12 @@ module.exports = {
     let files = this._super();
     if (options.ciProvider !== 'travis') {
       this._files = files.filter((file) => file !== '.travis.yml');
-    } else {
+    }
+    if (options.ciProvider !== 'github') {
       this._files = files.filter((file) => file.indexOf('.github') < 0);
+    }
+    if (options.ciProvider !== 'circleci') {
+      this._files = files.filter((file) => file.indexOf('.circleci') < 0);
     }
 
     return this._files;

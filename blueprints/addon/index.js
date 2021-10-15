@@ -171,9 +171,18 @@ module.exports = {
   files(options) {
     let appFiles = this.lookupBlueprint(this.appBlueprintName).files(options);
     let addonFilesPath = this.filesPath(this.options);
-    let ignoredCITemplate = this.options.ciProvider !== 'travis' ? '.travis.yml' : '.github';
+    let ignore = [];
+    if (this.options.ciProvider !== 'travis') {
+      ignore.push('.travis.yml');
+    }
+    if (this.options.ciProvider !== 'github') {
+      ignore.push('.github');
+    }
+    if (this.options.ciProvider !== 'circleci') {
+      ignore.push('.circleci');
+    }
 
-    let addonFiles = walkSync(addonFilesPath, { ignore: [ignoredCITemplate] });
+    let addonFiles = walkSync(addonFilesPath, { ignore });
 
     return uniq(appFiles.concat(addonFiles));
   },

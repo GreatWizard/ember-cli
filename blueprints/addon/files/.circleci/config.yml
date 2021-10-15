@@ -1,0 +1,91 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.7.0
+
+jobs:
+  test:
+    docker:
+      - image: circleci/node:12-browsers
+    steps:
+      - checkout
+      - node/install-packages<% if (yarn) { %>:
+          pkg-manager: yarn<% } %>
+      - run:
+          name: Lint
+          command: <%= yarn ? 'yarn' : 'npm run' %> lint
+      - run:
+          name: Run Tests
+          command: <%= yarn ? 'yarn' : 'npm run' %> test:ember
+
+  floating:
+    docker:
+      - image: circleci/node:12-browsers
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: <%= yarn ? 'yarn' : 'npm' %>
+          override-ci-command: <%= yarn ? 'yarn install --no-lockfile' : 'npm install --no-shrinkwrap' %>
+      - run:
+          name: Run Tests
+          command: <%= yarn ? 'yarn' : 'npm run' %> test:ember
+
+  try-scenarios:
+    docker:
+      - image: circleci/node:12-browsers
+    parameters:
+      scenario:
+        type: enum
+        enum:
+          [
+            "ember-lts-3.20",
+            "ember-lts-3.24",
+            "ember-release",
+            "ember-beta",
+            "ember-canary",
+            "ember-classic",
+            "ember-default-with-jquery",
+            "embroider-safe",
+            "embroider-optimized",
+          ]
+    steps:
+      - checkout
+      - node/install-packages<% if (yarn) { %>:
+          pkg-manager: yarn<% } %>
+      - run:
+          name: Run << parameters.scenario >> Tests
+          command: ./node_modules/.bin/ember try:one << parameters.scenario >>
+
+workflows:
+  tests:
+    jobs:
+      - test
+      - floating
+      - try-scenarios:
+          name: try-scenarios-ember-lts-3.20
+          scenario: ember-lts-3.20
+      - try-scenarios:
+          name: try-scenarios-ember-lts-3.24
+          scenario: ember-lts-3.24
+      - try-scenarios:
+          name: try-scenarios-ember-release
+          scenario: ember-release
+      - try-scenarios:
+          name: try-scenarios-ember-beta
+          scenario: ember-beta
+      - try-scenarios:
+          name: try-scenarios-ember-canary
+          scenario: ember-canary
+      - try-scenarios:
+          name: try-scenarios-ember-classic
+          scenario: ember-classic
+      - try-scenarios:
+          name: try-scenarios-ember-default-with-jquery
+          scenario: ember-default-with-jquery
+      - try-scenarios:
+          name: try-scenarios-embroider-safe
+          scenario: embroider-safe
+      - try-scenarios:
+          name: try-scenarios-embroider-optimized
+          scenario: embroider-optimized
+
